@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using RestSharp;
+using NLog;
 
 namespace DynDnsUpdater
 {
@@ -20,6 +21,7 @@ namespace DynDnsUpdater
         private static readonly string _password = ConfigurationManager.AppSettings["password"];
         private static readonly string _hostname = ConfigurationManager.AppSettings["hostname"];
 
+        private static Logger _logger = LogManager.GetCurrentClassLogger();
 
         private static string _ip;
 
@@ -52,6 +54,7 @@ namespace DynDnsUpdater
             while (true)
             {
                 var currentip = GetIP();
+                _logger.Debug("Got IP {0}", currentip);
                 if (currentip != _ip)
                     UpdateIP(currentip);
                 
@@ -67,7 +70,13 @@ namespace DynDnsUpdater
 
             var res = Client.Get(req);
             if (VerifyResponse(ip, res.Content))
-                _ip = ip;
+                SetIP(ip);
+        }
+
+        private static void SetIP(string ip)
+        {
+            _ip = ip;
+            _logger.Info("Updated to new ip {0}", ip);
         }
 
         private static bool VerifyResponse(string ip, string content)
