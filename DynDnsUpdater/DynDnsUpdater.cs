@@ -17,20 +17,14 @@ namespace DynDnsUpdater
 {
     public partial class DynDnsUpdater : ServiceBase
     {
-        private static readonly string _username = ConfigurationManager.AppSettings["username"];
-        private static readonly string _password = ConfigurationManager.AppSettings["password"];
-        private static readonly string _hostname = ConfigurationManager.AppSettings["hostname"];
+        private static readonly string _domains = ConfigurationManager.AppSettings["domains"];
+        private static readonly string _token = ConfigurationManager.AppSettings["token"];
 
         private static Logger _logger = LogManager.GetCurrentClassLogger();
 
         private static string _ip;
 
-        private static readonly RestClient Client = new RestClient("http://members.dyndns.org/")
-            {
-                Authenticator = new HttpBasicAuthenticator(_username, _password)
-            };
-
-
+        
         private static Thread _thread;
 
         public DynDnsUpdater()
@@ -64,12 +58,14 @@ namespace DynDnsUpdater
 
         private static void UpdateIP(string ip)
         {
-            var req = new RestRequest("nic/update/");
-            req.AddParameter("hostname", _hostname);
-            req.AddParameter("myip", ip);
+            var client = new RestClient("https://www.duckdns.org/");
+            var req = new RestRequest("update/");
+            req.AddParameter("domains", _domains);
+            req.AddParameter("token", _token);
+            req.AddParameter("ip", ip);
 
-            var res = Client.Get(req);
-            if (VerifyResponse(ip, res.Content))
+            var res = client.Get(req);
+            if (VerifyResponse(res.Content))
                 SetIP(ip);
         }
 
@@ -79,17 +75,22 @@ namespace DynDnsUpdater
             _logger.Info("Updated to new ip {0}", ip);
         }
 
-        private static bool VerifyResponse(string ip, string content)
+        private static bool VerifyResponse(string content)
         {
-            return content == string.Format("good {0}", ip) || content == string.Format("nochg {0}", ip);
+            return content == "OK";
         }
 
         private static string GetIP()
         {
-            var check = new RestClient("http://checkip.dyndns.com/");
+            var check = new RestClient("http://jsonip.com/");
             var req = new RestRequest(Method.GET);
-            var res = check.Get(req);
-            return new Regex(@"\b(?:\d{1,3}\.){3}\d{1,3}\b").Match(res.Content).Value;
+            var res = check.Get<JsonIp>(req);
+            return res.Data.ip;
+        }
+
+        class JsonIp
+        {
+            public string ip { get; set; }
         }
     }
 }

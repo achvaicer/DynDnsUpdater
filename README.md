@@ -1,7 +1,7 @@
 DynDnsUpdater
 =============
 
-A simple windows service that updates your current ip address into a DynDns.org host.
+A simple windows service that updates your current ip address into a ~~DynDns.org~~ DuckDns.org host.
 
 
 License
