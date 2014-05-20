@@ -11,6 +11,7 @@ namespace DynDnsUpdater
     [RunInstaller(true)]
     public partial class ProjectInstaller : System.Configuration.Install.Installer
     {
+        public const string ServiceName = "DynDnsUpdater";
         public ProjectInstaller()
         {
             InitializeComponent();
